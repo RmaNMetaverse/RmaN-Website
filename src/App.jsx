@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Github, 
   Linkedin, 
@@ -8,7 +8,8 @@ import {
   Mail, 
   Code, 
   Globe, 
-  Send 
+  Send,
+  Palette
 } from 'lucide-react';
 
 /* --- BEST UI TRENDS 2025 IMPLEMENTATION ---
@@ -21,6 +22,29 @@ import {
 
 const App = () => {
   const [scrolled, setScrolled] = useState(false);
+  const scrollerRef = useRef(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const startScroll = useRef(0);
+  const [isGrabbing, setIsGrabbing] = useState(false);
+  const skills = [
+    'Touchdesigner',
+    'Scripting',
+    'Game Development',
+    'Content Creation',
+    'Tool Development',
+    'AI Art',
+    'Web Development',
+    'Javascript',
+    'Unreal Engine',
+    'Python',
+    'Blender',
+    '3D',
+    'Music Production',
+    'Sound Design',
+    'Mixing & Mastering',
+    'VR/AR/MR/XR'
+  ];
 
   // Scroll detection for navbar blur effect
   useEffect(() => {
@@ -30,6 +54,37 @@ const App = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Programmatic continuous auto-scroll (loops seamlessly)
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    // If the content isn't duplicated, don't run
+    if (el.children.length < 2) return;
+
+    let rafId = null;
+    let last = performance.now();
+    const speed = 40; // pixels per second
+
+    const step = (now) => {
+      const delta = (now - last) / 1000;
+      last = now;
+      if (!isDown.current) {
+        // advance scrollLeft
+        el.scrollLeft += speed * delta;
+        // when we've scrolled past half (since we duplicated content), wrap around
+        const half = el.scrollWidth / 2;
+        if (el.scrollLeft >= half) {
+          el.scrollLeft -= half;
+        }
+      }
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [scrollerRef]);
 
   // Obfuscated email reconstruction to prevent bot scraping
   const getEmail = () => {
@@ -100,6 +155,7 @@ const App = () => {
                 <SocialBtn icon={<Instagram size={20}/>} href="https://instagram.com/rman.insta/" label="Instagram" />
                 <SocialBtn icon={<Linkedin size={20}/>} href="https://linkedin.com/in/armanjangmiri/" label="LinkedIn" />
                 <SocialBtn icon={<Cloud size={20}/>} href="https://soundcloud.com/rman-sound" label="SoundCloud" />
+                <SocialBtn icon={<Palette size={20}/>} href="https://www.artstation.com/rman" label="ArtStation" />
               </div>
             </div>
           </div>
@@ -109,9 +165,9 @@ const App = () => {
              {/* PLACEHOLDER IMAGE AREA */}
              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative">
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-100 via-gray-900 to-black"></div>
-                <img 
-                  src="/RmaNFaceCleanCyberpunk.png" 
-                  alt="RmaN Portrait" 
+                <img
+                  src={`${import.meta.env.BASE_URL}RmaNFaceCleanCyberpunk.png`}
+                  alt="RmaN Portrait"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/90 to-transparent">
@@ -124,25 +180,59 @@ const App = () => {
           {/* 5. Skills Scroller (Full Width) */}
           <div id="skills" className="md:col-span-4 md:row-span-1 bg-black/40 border border-white/10 rounded-3xl p-6 flex flex-col justify-center overflow-hidden relative backdrop-blur-md">
             <h3 className="text-sm uppercase tracking-widest text-gray-500 font-semibold mb-4">Skills</h3>
-            <div className="flex gap-12 items-center animate-scroll-left hover:pause">
-               {/* Doubled the list to ensure smooth infinite scroll on wide screens */}              
-               <TechIcon name="Touchdesigner" />
-               <TechIcon name="Scripting" />
-               <TechIcon name="Game Development" />
-               <TechIcon name="Content Creation" />
-               <TechIcon name="Tool Development" />            
-               <TechIcon name="AI Art" />
-               <TechIcon name="Web Development" />                                            
-               <TechIcon name="Javascript" />
-               <TechIcon name="Unreal Engine" />
-               <TechIcon name="Python" />
-               <TechIcon name="Blender" />
-               <TechIcon name="3D" />
-               <TechIcon name="Music Production" />
-               <TechIcon name="Sound Design" />
-               <TechIcon name="Mixing & Mastering" />
-               <TechIcon name="VR/AR/MR/XR" />
+            <div
+              ref={scrollerRef}
+              role="list"
+              onPointerDown={(e) => {
+                const el = scrollerRef.current;
+                if (!el) return;
+                isDown.current = true;
+                setIsGrabbing(true);
+                startX.current = e.clientX;
+                startScroll.current = el.scrollLeft;
+                try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+              }}
+              onPointerMove={(e) => {
+                const el = scrollerRef.current;
+                if (!el || !isDown.current) return;
+                const x = e.clientX;
+                const walk = x - startX.current;
+                el.scrollLeft = startScroll.current - walk;
+                e.preventDefault();
+              }}
+              onPointerUp={(e) => {
+                const el = scrollerRef.current;
+                isDown.current = false;
+                setIsGrabbing(false);
+                if (el) {
+                  try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+                }
+              }}
+              onPointerLeave={(e) => {
+                if (!isDown.current) return;
+                isDown.current = false;
+                setIsGrabbing(false);
+              }}
+              onPointerCancel={(e) => {
+                isDown.current = false;
+                setIsGrabbing(false);
+              }}
+              className={`flex gap-12 items-center no-scrollbar overflow-x-auto whitespace-nowrap ${isGrabbing ? 'cursor-grabbing' : 'cursor-grab'}`}
+              style={{ touchAction: 'pan-y', userSelect: isGrabbing ? 'none' : 'auto' }}
+            >
+               {/* Render the skills list twice to create a seamless looping scroller */}
+               {skills.map((s) => (
+                 <div key={s} className="inline-block">
+                   <TechIcon name={s} />
+                 </div>
+               ))}
+               {skills.map((s, i) => (
+                 <div key={s + '-dup-' + i} className="inline-block">
+                   <TechIcon name={s} />
+                 </div>
+               ))}
             </div>
+            
             {/* Fade edges */}
             <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black/80 to-transparent pointer-events-none z-10"></div>
             <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black/80 to-transparent pointer-events-none z-10"></div>
@@ -188,16 +278,9 @@ const App = () => {
         .animation-delay-4000 {
           animation-delay: 4s;
         }
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); } /* Adjusted for doubled list */
-        }
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
-        }
-        .hover\\:pause:hover {
-          animation-play-state: paused;
-        }
+        /* Programmatic auto-scroll is used instead of CSS transform animation.
+           This avoids jumpy behavior when the user manually drags the scroller.
+        */
         .text-xs {text-align:center}
       `}</style>
     </div>
