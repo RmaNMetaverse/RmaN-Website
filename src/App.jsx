@@ -32,8 +32,8 @@ const App = () => {
     'Scripting',
     'Game Development',
     'Content Creation',
-    'Tool Development',
     'AI Art',
+    'Web Design',
     'Web Development',
     'Javascript',
     'Unreal Engine',
@@ -66,19 +66,29 @@ const App = () => {
     let rafId = null;
     let last = performance.now();
     const speed = 40; // pixels per second
+    let exactScroll = el.scrollLeft;
 
     const step = (now) => {
       const delta = (now - last) / 1000;
       last = now;
+      
       if (!isDown.current) {
-        // advance scrollLeft
-        el.scrollLeft += speed * delta;
-        // when we've scrolled past half (since we duplicated content), wrap around
+        // advance scrollLeft using a float to prevent truncation
+        exactScroll += speed * delta;
+        
+        // Infinite wrap around logic (works for auto-scroll)
         const half = el.scrollWidth / 2;
-        if (el.scrollLeft >= half) {
-          el.scrollLeft -= half;
+        if (exactScroll >= half) {
+          exactScroll -= half;
+        } else if (exactScroll <= 0) {
+          exactScroll += half;
         }
+        el.scrollLeft = exactScroll;
+      } else {
+        // Keeps exactScroll synced while user is dragging natively
+        exactScroll = el.scrollLeft;
       }
+      
       rafId = requestAnimationFrame(step);
     };
 
@@ -156,6 +166,18 @@ const App = () => {
                 <SocialBtn icon={<Linkedin size={20}/>} href="https://linkedin.com/in/armanjangmiri/" label="LinkedIn" />
                 <SocialBtn icon={<Cloud size={20}/>} href="https://soundcloud.com/rman-sound" label="SoundCloud" />
                 <SocialBtn icon={<Palette size={20}/>} href="https://www.artstation.com/rman" label="ArtStation" />
+                
+                {/* Special Highlight Button */}
+                <a 
+                  href="#" 
+                  className="group/web flex-grow sm:flex-grow-0 relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-bold text-white bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-xl border border-cyan-500/30 hover:border-cyan-400 hover:text-white transition-all duration-500 hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]"
+                >
+                  <span className="absolute inset-0 w-full h-full opacity-0 group-hover/web:opacity-100 bg-gradient-to-r from-cyan-500/40 to-blue-500/40 transition-opacity duration-500"></span>
+                  <span className="relative flex items-center gap-2 whitespace-nowrap tracking-wide">
+                    Web Dev/Design 
+                    <span className="group-hover/web:translate-x-2 transition-transform duration-300 ease-out font-mono font-black text-cyan-300 group-hover/web:text-white">=&gt;</span>
+                  </span>
+                </a>
               </div>
             </div>
           </div>
@@ -197,7 +219,20 @@ const App = () => {
                 if (!el || !isDown.current) return;
                 const x = e.clientX;
                 const walk = x - startX.current;
-                el.scrollLeft = startScroll.current - walk;
+                let newScroll = startScroll.current - walk;
+                
+                const half = el.scrollWidth / 2;
+                if (newScroll >= half) {
+                  newScroll -= half;
+                  startX.current = e.clientX;
+                  startScroll.current = newScroll;
+                } else if (newScroll <= 0) {
+                  newScroll += half;
+                  startX.current = e.clientX;
+                  startScroll.current = newScroll;
+                }
+                
+                el.scrollLeft = newScroll;
                 e.preventDefault();
               }}
               onPointerUp={(e) => {
@@ -217,20 +252,24 @@ const App = () => {
                 isDown.current = false;
                 setIsGrabbing(false);
               }}
-              className={`flex gap-12 items-center no-scrollbar overflow-x-auto whitespace-nowrap ${isGrabbing ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex items-center no-scrollbar overflow-x-auto whitespace-nowrap ${isGrabbing ? 'cursor-grabbing' : 'cursor-grab'}`}
               style={{ touchAction: 'pan-y', userSelect: isGrabbing ? 'none' : 'auto' }}
             >
                {/* Render the skills list twice to create a seamless looping scroller */}
-               {skills.map((s) => (
-                 <div key={s} className="inline-block">
-                   <TechIcon name={s} />
-                 </div>
-               ))}
-               {skills.map((s, i) => (
-                 <div key={s + '-dup-' + i} className="inline-block">
-                   <TechIcon name={s} />
-                 </div>
-               ))}
+               <div className="flex gap-12 pr-12 shrink-0">
+                 {skills.map((s) => (
+                   <div key={s} className="inline-block">
+                     <TechIcon name={s} />
+                   </div>
+                 ))}
+               </div>
+               <div className="flex gap-12 pr-12 shrink-0">
+                 {skills.map((s, i) => (
+                   <div key={s + '-dup-' + i} className="inline-block">
+                     <TechIcon name={s} />
+                   </div>
+                 ))}
+               </div>
             </div>
             
             {/* Fade edges */}
@@ -295,14 +334,129 @@ const SocialBtn = ({ icon, href, label }) => (
   </a>
 );
 
-const TechIcon = ({ name }) => (
-  <div className="flex flex-col items-center gap-2 min-w-[80px] text-gray-400 hover:text-cyan-400 transition-colors cursor-default">
-    <div className="p-3 rounded-full bg-white/5 border border-white/10">
-      <Code size={20} />
+const Icons = {
+  'Touchdesigner': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="2" y="6" width="20" height="12" rx="2" fill="currentColor" opacity="0.18" />
+      <circle cx="8" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M14 9v6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  'Scripting': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M7 9l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  'Game Development': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="3" y="7" width="18" height="10" rx="3" fill="currentColor" opacity="0.08" />
+      <circle cx="17" cy="11" r="1.1" fill="currentColor" />
+      <circle cx="19.2" cy="13" r="1.1" fill="currentColor" />
+      <rect x="5" y="10" width="3" height="1.6" rx="0.4" fill="currentColor" />
+      <path d="M8 9.2v3.6M6.4 11.0h3.2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="8.5" cy="12.5" r="0.8" fill="currentColor" />
+    </svg>
+  ),
+  'Content Creation': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <circle cx="12" cy="10" r="3.2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M5 18c1.5-3 6-3 7-3s5.5 0 7 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  'AI Art': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M5 19c2-3 6-4 7-4s5 1 7 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  'Web Design': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M7 9h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="9" cy="15" r="1" fill="currentColor" />
+    </svg>
+  ),
+  'Web Development': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M3 12h18" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M6 8v8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M18 8v8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  'Javascript': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="2" y="3" width="20" height="18" rx="2" fill="currentColor" opacity="0.08" />
+      <text x="12" y="16" fill="currentColor" fontSize="9" fontWeight="700" textAnchor="middle">JS</text>
+    </svg>
+  ),
+  'Unreal Engine': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="2" y="3" width="20" height="18" rx="2" fill="currentColor" opacity="0.08" />
+      <text x="12" y="16" fill="currentColor" fontSize="9" fontWeight="700" textAnchor="middle">UE</text>
+    </svg>
+  ),
+  'Python': (
+    // Python official logo adapted to monochrome
+    <svg width="40" height="40" viewBox="0 0 110 110" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M54.55 10.96c-27.13 0-25.04 11.8-25.04 11.8l.06 12.19h25.42v3.66H26.31s-12.72-.8-12.72 17.51c0 18.3 11 17.9 11 17.9h5.66V60.91s-.18-8.15 8.13-8.15h24.87s7.63.15 7.63-7.53V22.25s1-11.29-16.33-11.29zM38.83 23c2.05 0 3.73 1.68 3.73 3.73 0 2.05-1.68 3.73-3.73 3.73-2.05 0-3.73-1.68-3.73-3.73 0-2.05 1.68-3.73 3.73-3.73z"/>
+      <path d="M55.45 101.44c27.13 0 25.04-11.8 25.04-11.8l-.06-12.18H55.01v-3.66h28.68s12.72.8 12.72-17.51c0-18.3-11-17.9-11-17.9h-5.66v13.11s.18 8.16-8.13 8.16H46.75s-7.63-.16-7.63 7.53v22.97s-1 11.28 16.33 11.28zM71.17 89.38c-2.05 0-3.73-1.68-3.73-3.73s1.68-3.73 3.73-3.73c2.05 0 3.73 1.68 3.73 3.73s-1.68 3.73-3.73 3.73z"/>
+    </svg>
+  ),
+  'Blender': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.2" opacity="0.12" />
+      <path d="M16 8c-2 0-4 2-4 4s2 4 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="15.5" cy="8.5" r="0.9" fill="currentColor" />
+    </svg>
+  ),
+  '3D': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <path d="M3.27 6.96L12 12.01l8.73-5.05" />
+      <path d="M12 22.08V12" />
+    </svg>
+  ),
+  'Music Production': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <circle cx="7" cy="12" r="2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M9 10v4c2 0 3 1 5 2v-6c-2-1-3-2-5-2z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    </svg>
+  ),
+  'Sound Design': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M4 12h3l4-6v12l-4-6H4z" fill="currentColor" opacity="0.12" />
+      <path d="M16 8c1 1.5 1 3 0 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M18.5 6c2 2.5 2 5.5 0 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  'Mixing & Mastering': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="3" y="6" width="18" height="12" rx="1" stroke="currentColor" strokeWidth="1.1" fill="none" />
+      <path d="M7 9v6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M11 10v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M15 8v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  ),
+  'VR/AR/MR/XR': (
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M7 11h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+};
+
+const TechIcon = ({ name }) => {
+  const Icon = Icons[name] || <Code size={20} />;
+  return (
+    <div className="flex flex-col items-center gap-2 min-w-[80px] text-gray-400 hover:text-cyan-400 transition-colors cursor-default">
+      <div className="p-2 rounded-full bg-white/5 border border-white/10">
+        {Icon}
+      </div>
+      <span className="text-xs font-mono">{name}</span>
     </div>
-    <span className="text-xs font-mono">{name}</span>
-  </div>
-);
+  );
+};
 
 export default App;
 
