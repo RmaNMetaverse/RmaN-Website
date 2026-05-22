@@ -174,8 +174,21 @@ const App = () => {
                 >
                   <span className="absolute inset-0 w-full h-full opacity-0 group-hover/web:opacity-100 bg-gradient-to-r from-cyan-500/40 to-blue-500/40 transition-opacity duration-500"></span>
                   <span className="relative flex items-center gap-2 whitespace-nowrap tracking-wide">
-                    Web Dev/Design 
+                    WebDev
                     <span className="group-hover/web:translate-x-2 transition-transform duration-300 ease-out font-mono font-black text-cyan-300 group-hover/web:text-white">=&gt;</span>
+                  </span>
+                </a>
+                {/* CV/Resume Button (root-relative, opens in new tab) */}
+                <a
+                  href="/cvresume"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/cv flex-grow sm:flex-grow-0 relative inline-flex items-center justify-center px-6 py-3 overflow-hidden font-bold text-white bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl border border-purple-500/30 hover:border-pink-400 hover:text-white transition-all duration-500 hover:shadow-[0_0_30px_rgba(168,85,247,0.25)]"
+                >
+                  <span className="absolute inset-0 w-full h-full opacity-0 group-hover/cv:opacity-100 bg-gradient-to-r from-purple-500/40 to-pink-500/40 transition-opacity duration-500"></span>
+                  <span className="relative flex items-center gap-2 whitespace-nowrap tracking-wide">
+                    CV/Resume
+                    <span className="group-hover/cv:translate-x-2 transition-transform duration-300 ease-out font-mono font-black text-pink-300 group-hover/cv:text-white">&rarr;</span>
                   </span>
                 </a>
               </div>
