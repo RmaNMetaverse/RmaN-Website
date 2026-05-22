@@ -109,8 +109,8 @@ const App = () => {
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-blob"></div>
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-blob animation-delay-4000"></div>
-        {/* Noise overlay for texture */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        {/* Noise overlay for texture (use local asset for offline support) */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url(${import.meta.env.BASE_URL}noise.svg)` }}></div>
       </div>
 
       {/* --- NAVBAR --- */}
