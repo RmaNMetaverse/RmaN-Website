@@ -1,20 +1,386 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RmaN Website</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RmaN Website - Immersive Hero</title>
 
-  <link rel="icon" type="image/png" href="./favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <link rel="shortcut icon" href="./favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="RmaNWeb" />
-  <link rel="manifest" href="./site.webmanifest" />
-  </head>
-  <body>
+    <link rel="icon" type="image/png" href="./favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="RmaNWeb" />
+    <link rel="manifest" href="./site.webmanifest" />
+
+    <!-- Local assets for offline usage - place the required files under /assets -->
+    <!-- Add a built Tailwind CSS at ./assets/css/tailwind.css or any site CSS; required for offline. -->
+    <link rel="stylesheet" href="./assets/css/tailwind.css">
+    <!-- Local Inter font files (place .woff2 files in ./assets/fonts/) -->
+    <style>
+        /* Local Inter faces downloaded from Google Fonts for offline use */
+        @font-face { font-family: 'InterLocal'; src: url('./assets/fonts/Inter-300.ttf') format('truetype'); font-weight: 300; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'InterLocal'; src: url('./assets/fonts/Inter-500.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'InterLocal'; src: url('./assets/fonts/Inter-700.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'InterLocal'; src: url('./assets/fonts/Inter-900.ttf') format('truetype'); font-weight: 900; font-style: normal; font-display: swap; }
+        /* fallback mapping used in the page */
+        :root { --ui-font: 'InterLocal', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    </style>
+
+    <style>
+        html, body { height: 100%; margin: 0; font-family: var(--ui-font, system-ui, sans-serif); background: #050505; color: #fff; }
+        
+        #immersive-hero {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #0b0b0b 0%, #000 100%);
+        }
+
+        #immersive-canvas-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Scroll indicator at bottom of hero */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            animation: bounce 2.2s infinite;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .scroll-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .scroll-arrow {
+            font-size: 30px;
+            line-height: 1;
+            color: rgba(255,255,255,0.95);
+            font-weight: 800;
+            display: inline-block;
+            transform: translateY(0);
+            /* arrow falling loop */
+            animation: arrowFall 1.2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(0.6rem); }
+        }
+
+        @keyframes arrowFall {
+            0% { transform: translateY(0) rotate(-45deg); opacity: 1; }
+            50% { transform: translateY(10px) rotate(-45deg); opacity: 0.65; }
+            100% { transform: translateY(0) rotate(-45deg); opacity: 1; }
+        }
+
+        #root { position: relative; z-index: 5; }
+    </style>
+</head>
+<body>
+
+    <!-- Immersive Hero Section - dedicated canvas for interactive shader -->
+    <section id="immersive-hero">
+        <div id="immersive-canvas-container"></div>
+        
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator" aria-label="Scroll to content">
+            <p class="scroll-text">Scroll to explore</p>
+            <div class="scroll-arrow">⇅</div>
+        </div>
+    </section>
+
+    <!-- React root (page content) remains below hero -->
     <div id="root"></div>
     <script type="module" src="./src/main.jsx"></script>
-  </body>
+
+    <!-- Three.js and shader script -- loaded last so hero is present -->
+    <!-- Local Three.js for offline usage: put three.min.js at ./assets/vendor/three.min.js -->
+    <script src="./assets/vendor/three.min.js"></script>
+    <script>
+    // All shader code adapted to live inside the hero section canvas container
+    (function(){
+        const heroSection = document.getElementById('immersive-hero');
+        const container = document.getElementById('immersive-canvas-container');
+        const scene = new THREE.Scene();
+        const postScene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
+        camera.position.z = 120;
+        const postCamera = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.domElement.style.width = '100%';
+        renderer.domElement.style.height = '100%';
+        renderer.domElement.style.display = 'block';
+        container.appendChild(renderer.domElement);
+
+        const renderTarget = new THREE.WebGLRenderTarget(container.clientWidth, container.clientHeight, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat,
+            type: THREE.UnsignedByteType
+        });
+
+        // Shaders (identical to original)
+        const particleVertexShader = `attribute float size; void main() { vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * (250.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition; }`;
+        const particleFragmentShader = `void main() { vec2 xy = gl_PointCoord.xy - vec2(0.5); float ll = length(xy); if(ll > 0.5) discard; float alpha = pow((0.5 - ll) * 2.0, 1.8); gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * 0.8); }`;
+
+        const particleMaterial = new THREE.ShaderMaterial({ vertexShader: particleVertexShader, fragmentShader: particleFragmentShader, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+
+        const postVertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position,1.0); }`;
+        const postFragmentShader = `uniform sampler2D tDiffuse; uniform vec2 uResolution; uniform vec2 uMouse; uniform float uTime; varying vec2 vUv; vec3 rainbow(float t){return 0.5+0.5*cos(6.28318*(t+vec3(0.0,0.33,0.67)));} void main(){ vec4 texColor = texture2D(tDiffuse, vUv); float v = texColor.a; float threshold = 0.5; if(v < threshold){ discard; return; } vec2 texel = 1.0 / uResolution; float aspect = uResolution.x/uResolution.y; vec2 aspectCorrection = vec2(aspect,1.0); float mouseDist = distance(vUv*aspectCorrection, uMouse*aspectCorrection); float interactionStrength = smoothstep(0.25, 0.0, mouseDist); float baseChrom = 0.003; vec2 chromOffset = vec2(baseChrom + interactionStrength * 0.008, 0.0); float step = 1.0; float v0 = texture2D(tDiffuse, vUv + vec2(-texel.x * step, 0.0)).a; float v1 = texture2D(tDiffuse, vUv + vec2(texel.x * step, 0.0)).a; float v2 = texture2D(tDiffuse, vUv + vec2(0.0, -texel.y * step)).a; float v3 = texture2D(tDiffuse, vUv + vec2(0.0, texel.y * step)).a; vec3 normal = normalize(vec3(v0 - v1, v2 - v3, 0.15)); vec3 lightDir = normalize(vec3(0.4,0.8,0.5)); vec3 lightDir2 = normalize(vec3(-0.5,-0.2,0.8)); vec3 viewDir = vec3(0.0,0.0,1.0); vec3 halfVector = normalize(lightDir + viewDir); vec3 halfVector2 = normalize(lightDir2 + viewDir); float diffuse = max(dot(normal, lightDir), 0.0); float specular = pow(max(dot(normal, halfVector), 0.0), 80.0); float specular2 = pow(max(dot(normal, halfVector2), 0.0), 40.0) * 0.4; vec3 baseCol = vec3(0.15,0.15,0.15); vec3 env; env.r = smoothstep(0.0, 1.0, normal.y + chromOffset.x * 5.0); env.g = smoothstep(0.0, 1.0, normal.y); env.b = smoothstep(0.0, 1.0, normal.y - chromOffset.x * 5.0); env = mix(baseCol, env, 0.8); env = mix(env, vec3(0.02), smoothstep(0.0, 1.0, -normal.y) * 0.8); vec3 finalColor = env * (diffuse * 0.5 + 0.5) + vec3(1.0) * specular + vec3(0.8,0.9,1.0) * specular2; vec3 rainbowColor = rainbow(uTime * 0.3 + vUv.x * 3.0 + vUv.y * 2.0); finalColor = mix(finalColor, rainbowColor, interactionStrength * 0.6); float alpha = smoothstep(threshold, threshold + 0.05, v); gl_FragColor = vec4(finalColor, alpha); }`;
+
+        const postMaterial = new THREE.ShaderMaterial({ uniforms: { tDiffuse: { value: renderTarget.texture }, uResolution: { value: new THREE.Vector2(container.clientWidth, container.clientHeight) }, uMouse: { value: new THREE.Vector2(0.5,0.5) }, uTime: { value: 0.0 } }, vertexShader: postVertexShader, fragmentShader: postFragmentShader, transparent:true });
+        const postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2,2), postMaterial);
+        postScene.add(postQuad);
+
+        // Particles
+        let particlesData = [];
+        let particleSystem;
+        let positions, sizes;
+        const mouse = new THREE.Vector2(-1000,-1000);
+        const mouse3D = new THREE.Vector3();
+        const uMouse = new THREE.Vector2(0.5,0.5);
+        let time = 0;
+        const raycaster = new THREE.Raycaster();
+        const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
+
+        // Responsiveness helpers
+        let particleScale = 0.18; // base pixel-to-world multiplier (adjusted per screen)
+        let sizeMultiplier = 1.0;
+        let lastImageData = null;
+        let lastImgW = 0;
+        let lastImgH = 0;
+        let resizeTimer = null;
+        const PARTICLE_SCALE_MIN = 0.10;
+        const PARTICLE_SCALE_MAX = 0.22;
+
+        function createParticles(imageData, width, height){
+            // store latest image data so we can recreate on resize
+            lastImageData = imageData;
+            lastImgW = width;
+            lastImgH = height;
+
+            // compute particle scale based on current container size (clamped for large screens)
+            const baseScale = (Math.min(container.clientWidth, container.clientHeight) / 500) * 0.18;
+            particleScale = Math.max(PARTICLE_SCALE_MIN, Math.min(PARTICLE_SCALE_MAX, baseScale));
+            sizeMultiplier = particleScale / 0.18;
+
+            const tempParticles = [];
+            for(let y=0;y<height;y+=2){
+                for(let x=0;x<width;x+=2){
+                    const idx = (y*width + x)*4;
+                    const r = imageData.data[idx]; const g = imageData.data[idx+1]; const b = imageData.data[idx+2]; const a = imageData.data[idx+3];
+                    if(a>128 && (r>50||g>50||b>50)){
+                        const px = (x - width/2) * particleScale;
+                        const py = -(y - height/2) * particleScale;
+                        const pz = 0;
+                        tempParticles.push({ x:px,y:py,z:pz, ox:px,oy:py,oz:pz, vx:0,vy:0,vz:0, baseSize: Math.random()*8 + 6 });
+                    }
+                }
+            }
+
+            const MAX_PARTICLES = 12000;
+            if(tempParticles.length > MAX_PARTICLES){ tempParticles.sort(()=>0.5-Math.random()); particlesData = tempParticles.slice(0, MAX_PARTICLES); } else particlesData = tempParticles;
+
+            const particleCount = particlesData.length;
+            const geometry = new THREE.BufferGeometry();
+            positions = new Float32Array(particleCount*3);
+            sizes = new Float32Array(particleCount);
+
+            const spread = 200 * sizeMultiplier;
+            for(let i=0;i<particleCount;i++){
+                positions[i*3] = (Math.random()-0.5) * spread;
+                positions[i*3+1] = (Math.random()-0.5) * spread;
+                positions[i*3+2] = (Math.random()-0.5) * spread;
+                sizes[i] = particlesData[i].baseSize * sizeMultiplier;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes,1));
+
+            if(particleSystem) scene.remove(particleSystem);
+            particleSystem = new THREE.Points(geometry, particleMaterial);
+            scene.add(particleSystem);
+        }
+
+        // Image loading - directly load the logo file (canvas size adapts to viewport)
+        function loadLogoFromUrl(url){
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+            // choose canvas resolution based on viewport to keep particle count reasonable
+            const base = Math.min(Math.max(200, Math.round(Math.min(container.clientWidth, container.clientHeight))), 600);
+            canvas.width = base;
+            canvas.height = base;
+
+            const img = new Image(); img.crossOrigin = 'anonymous';
+            img.onload = ()=>{
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.9;
+                const w = img.width * scale; const h = img.height * scale;
+                const x = (canvas.width - w) / 2; const y = (canvas.height - h) / 2;
+                ctx.drawImage(img, x, y, w, h);
+                const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+                createParticles(imageData, canvas.width, canvas.height);
+            };
+            img.src = url;
+        }
+
+        // Load logo directly from project folder
+        const filename = "RmaN Logo Big Transparent Logo Main Only R - Mask - White.png";
+        loadLogoFromUrl(filename);
+
+        // Interaction - use window events and calculate relative position to container
+        window.addEventListener('mousemove', (event) => {
+            const rect = heroSection.getBoundingClientRect();
+            
+            // Only process if mouse is over hero section
+            if(event.clientY >= rect.top && event.clientY <= rect.bottom && event.clientX >= rect.left && event.clientX <= rect.right) {
+                // For raycasting (-1 to 1)
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                // For shader (0 to 1)
+                uMouse.x = (event.clientX - rect.left) / rect.width;
+                uMouse.y = 1.0 - ((event.clientY - rect.top) / rect.height);
+
+                if(postMaterial) {
+                    postMaterial.uniforms.uMouse.value.copy(uMouse);
+                }
+            }
+        });
+
+        // Touch support
+        window.addEventListener('touchmove', (event) => {
+            if(event.touches && event.touches[0]) {
+                const touch = event.touches[0];
+                const rect = heroSection.getBoundingClientRect();
+                
+                // Only process if touch is over hero section
+                if(touch.clientY >= rect.top && touch.clientY <= rect.bottom && touch.clientX >= rect.left && touch.clientX <= rect.right) {
+                    mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+
+                    uMouse.x = (touch.clientX - rect.left) / rect.width;
+                    uMouse.y = 1.0 - ((touch.clientY - rect.top) / rect.height);
+
+                    if(postMaterial) {
+                        postMaterial.uniforms.uMouse.value.copy(uMouse);
+                    }
+                }
+            }
+        }, { passive: true });
+
+        // Make scroll indicator clickable/touchable
+        const scrollIndicator = document.querySelector('.scroll-indicator');
+        if(scrollIndicator){
+            scrollIndicator.style.cursor = 'pointer';
+            scrollIndicator.setAttribute('role', 'button');
+            scrollIndicator.setAttribute('tabindex', '0');
+            const doScroll = ()=>{ const root = document.getElementById('root'); if(root) root.scrollIntoView({behavior:'smooth'}); };
+            scrollIndicator.addEventListener('click', doScroll);
+            scrollIndicator.addEventListener('touchstart', function(e){ e.preventDefault(); doScroll(); }, { passive:false });
+            scrollIndicator.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') { doScroll(); } });
+        }
+
+        function updateSizes(){
+            const w = container.clientWidth; const h = container.clientHeight;
+            camera.aspect = w/h; camera.updateProjectionMatrix();
+            renderer.setSize(w,h); renderTarget.setSize(w,h); postMaterial.uniforms.uResolution.value.set(w,h);
+
+            // adjust camera distance to keep logo fitting across viewport sizes (more conservative for large desktops)
+            camera.position.z = Math.max(120, Math.min(600, Math.max(w,h) * 0.12));
+
+            // recreate particles with new scale if we have image data
+            if(lastImageData){ createParticles(lastImageData, lastImgW, lastImgH); }
+        }
+
+        window.addEventListener('resize', ()=>{
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(updateSizes, 120);
+        });
+
+        function animate(){ 
+            requestAnimationFrame(animate); 
+            time += 0.01; 
+            if(postMaterial) postMaterial.uniforms.uTime.value = time; 
+            
+            if(particleSystem && particlesData.length>0){ 
+                raycaster.setFromCamera(mouse, camera); 
+                raycaster.ray.intersectPlane(plane, mouse3D); 
+                const positionsAttr = particleSystem.geometry.attributes.position; 
+                const array = positionsAttr.array; 
+                const stiffness = 0.04; 
+                const damping = 0.75; 
+                const repelRadius = 22.0 * sizeMultiplier; 
+                const repelForce = 1.3; 
+                
+                for(let i=0;i<particlesData.length;i++){ 
+                    const p = particlesData[i]; 
+                    const dx = p.ox - p.x; 
+                    const dy = p.oy - p.y; 
+                    const dz = p.oz - p.z; 
+                    p.vx += dx * stiffness; 
+                    p.vy += dy * stiffness; 
+                    p.vz += dz * stiffness; 
+                    const mdx = p.x - mouse3D.x; 
+                    const mdy = p.y - mouse3D.y; 
+                    const mdz = p.z - mouse3D.z; 
+                    const distSq = mdx*mdx + mdy*mdy + mdz*mdz; 
+                    const dist = Math.sqrt(distSq) || 1.0; 
+                    if(dist < repelRadius){ 
+                        const force = (repelRadius - dist) / repelRadius; 
+                        p.vx += (mdx / dist) * force * repelForce; 
+                        p.vy += (mdy / dist) * force * repelForce; 
+                        p.vz += force * (repelForce * 1.5); 
+                    } 
+                    p.vx *= damping; 
+                    p.vy *= damping; 
+                    p.vz *= damping; 
+                    p.x += p.vx; 
+                    p.y += p.vy; 
+                    p.z += p.vz; 
+                    array[i*3] = p.x; 
+                    array[i*3+1] = p.y; 
+                    array[i*3+2] = p.z; 
+                } 
+                positionsAttr.needsUpdate = true; 
+                particleSystem.rotation.y = Math.sin(Date.now() * 0.0005) * 0.15; 
+                particleSystem.rotation.x = Math.cos(Date.now() * 0.0003) * 0.05; 
+            }
+            
+            renderer.setRenderTarget(renderTarget); 
+            renderer.clear(); 
+            renderer.render(scene, camera);
+            renderer.setRenderTarget(null); 
+            renderer.render(postScene, postCamera);
+        }
+
+        animate();
+    })();
+    </script>
+</body>
 </html>

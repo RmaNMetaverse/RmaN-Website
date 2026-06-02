@@ -1,0 +1,14 @@
+﻿/* Minimal Tailwind-like CSS (offline placeholder). Replace with a full compiled Tailwind if needed. */
+:root{--bg:#050505;--fg:#ffffff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:InterLocal,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:var(--bg);color:var(--fg)}
+.text-4xl{font-size:2.25rem}
+.font-extrabold{font-weight:800}
+.bg-white{background:#fff}
+.text-black{color:#000}
+.rounded-full{border-radius:9999px}
+.hidden{display:none}
+.flex{display:flex}
+.items-center{align-items:center}
+.justify-center{justify-content:center}
+.p-8{padding:2rem}
