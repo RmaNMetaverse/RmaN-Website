@@ -129,7 +129,7 @@ const App = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-3 gap-4 md:h-[800px] mb-20">
           
           {/* 1. Main Profile Card (Now Wider: 3x2 on desktop) */}
-          <div className="md:col-span-3 md:row-span-2 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col justify-center group hover:border-cyan-500/30 transition-all duration-500 shadow-2xl overflow-hidden relative">
+          <div className="order-2 md:order-1 md:col-span-3 md:row-span-2 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col justify-center group hover:border-cyan-500/30 transition-all duration-500 shadow-2xl overflow-hidden relative">
             <div className="absolute top-0 right-0 p-32 bg-cyan-500/20 blur-[100px] rounded-full group-hover:bg-cyan-400/30 transition-all duration-500"></div>
             
             <div className="z-10 relative">
@@ -196,7 +196,7 @@ const App = () => {
           </div>
 
           {/* 2. Portrait / Avatar Card (Takes remaining 1 column) */}
-          <div className="md:col-span-1 md:row-span-2 bg-black/40 border border-white/10 rounded-3xl overflow-hidden relative group">
+          <div className="order-1 md:order-2 md:col-span-1 md:row-span-2 bg-black/40 border border-white/10 rounded-3xl overflow-hidden relative group">
              {/* PLACEHOLDER IMAGE AREA */}
              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center relative">
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-100 via-gray-900 to-black"></div>
@@ -213,7 +213,7 @@ const App = () => {
           </div>
 
           {/* 5. Skills Scroller (Full Width) */}
-          <div id="skills" className="md:col-span-4 md:row-span-1 bg-black/40 border border-white/10 rounded-3xl p-6 flex flex-col justify-center overflow-hidden relative backdrop-blur-md">
+          <div id="skills" className="order-3 md:order-3 md:col-span-4 md:row-span-1 bg-black/40 border border-white/10 rounded-3xl p-6 flex flex-col justify-center overflow-hidden relative backdrop-blur-md">
             <h3 className="text-sm uppercase tracking-widest text-gray-500 font-semibold mb-4">Skills</h3>
             <div
               ref={scrollerRef}
